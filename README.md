@@ -115,39 +115,52 @@ polygit worktree list
 polygit worktree remove <name>
 ```
 
-#### Preview Worktrees
+### preview
 
-Create a worktree that auto-merges multiple feature branches:
-
-```bash
-polygit worktree add-preview <name> \
-  --base main \
-  --features feature/a --features feature/b \
-  --strategy merge
-```
-
-Options:
-- `--base <branch>`: Base branch for all members
-- `--features <branch>`: Feature branches to merge (repeatable)
-- `--strategy <strategy>`: Merge strategy: `rebase`, `merge`, or `claude`
-- `--override <spec>`: Per-member override (format: `member:base=branch,features=f1,f2`)
-- `--uncommitted-default <mode>`: Default for uncommitted changes: `include` or `discard`
-
-### update
-
-Refresh a preview worktree by re-merging feature branches.
+Manage preview worktrees that auto-merge multiple feature branches.
 
 ```bash
-# Inside a preview worktree
-polygit update
+# Create a preview worktree
+polygit preview add <name> <base> <feature>...
+
+# List preview worktrees
+polygit preview list
+
+# Update/refresh a preview worktree
+polygit preview update [name]
+
+# Remove a preview worktree
+polygit preview remove <name>
 ```
 
-Options:
-- `--strategy <strategy>`: Override merge strategy
+#### Examples
+
+```bash
+# Merge two features onto main
+polygit preview add my-preview main feature/auth feature/api
+
+# Use rebase strategy instead of merge
+polygit preview add my-preview main feature/auth feature/api -s rebase
+
+# Use Claude AI to resolve conflicts
+polygit preview add my-preview main feature/auth feature/api -s claude
+```
+
+#### Options for `preview add`
+
+- `-s <strategy>`: Merge strategy: `merge` (default), `rebase`, or `claude`
+- `-o <spec>`: Per-member override (format: `member:base=branch,features=f1,f2`)
+- `--uncommitted <mode>`: Default for uncommitted changes: `include` (default) or `discard`
+
+#### Options for `preview update`
+
+- `-s <strategy>`: Override merge strategy
 - `--no-uncommitted`: Discard all uncommitted changes
 - `--uncommitted`: Include all uncommitted changes
 - `--uncommitted-for <member>`: Include uncommitted only for specific members
 - `--dry-run`: Show what would be merged without making changes
+
+By default, uncommitted changes are included (uses the setting from `preview add`).
 
 ## Preview Worktrees
 
@@ -161,19 +174,17 @@ Preview worktrees solve the problem of testing multiple parallel feature branche
 
 ```bash
 # Create a preview worktree combining two features
-polygit worktree add-preview test-integration \
-  --base main \
-  --features feature/auth --features feature/api
+polygit preview add test-integration main feature/auth feature/api
 
 # Work in the preview worktree
 cd .worktrees/test-integration
 
 # After making changes to feature branches, refresh:
-polygit update
+polygit preview update
 
 # When done, remove the preview
 cd ..
-polygit worktree remove test-integration
+polygit preview remove test-integration
 ```
 
 ### Merge Strategies
