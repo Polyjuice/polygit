@@ -8,6 +8,7 @@ import { checkoutCommand } from "./commands/checkout.js";
 import { branchCommand } from "./commands/branch.js";
 import { logCommand } from "./commands/log.js";
 import { worktreeCommand } from "./commands/worktree.js";
+import { updateCommand } from "./commands/update.js";
 
 const app = subcommands({
   name: "polygit",
@@ -21,6 +22,7 @@ const app = subcommands({
     branch: branchCommand,
     log: logCommand,
     worktree: worktreeCommand,
+    update: updateCommand,
   },
 });
 

@@ -62,8 +62,62 @@ export interface WorktreeInfo {
  * Configuration for worktree sets (worktrees.json)
  */
 export interface WorktreesConfig {
-  /** List of worktree sets */
-  worktrees: WorktreeInfo[];
+  /** List of worktree sets (regular and preview) */
+  worktrees: (WorktreeInfo | PreviewWorktreeInfo)[];
+}
+
+// ============================================================================
+// Preview Worktree Types
+// ============================================================================
+
+/**
+ * Merge strategy for preview worktrees
+ */
+export type MergeStrategy = "rebase" | "merge" | "claude";
+
+/**
+ * Per-member override for preview worktrees
+ */
+export interface PreviewMemberOverride {
+  /** Override base branch for this member */
+  base?: string;
+  /** Override features for this member (empty array = no features) */
+  features?: string[];
+}
+
+/**
+ * Configuration for a preview worktree
+ */
+export interface PreviewConfig {
+  /** Default base branch for all members */
+  defaultBase: string;
+  /** Default feature branches for all members */
+  defaultFeatures: string[];
+  /** Per-member overrides */
+  memberOverrides?: Record<string, PreviewMemberOverride>;
+  /** Merge strategy */
+  strategy: MergeStrategy;
+  /** Default behavior for uncommitted changes */
+  uncommittedDefault: "include" | "discard";
+}
+
+/**
+ * Extended worktree info for preview worktrees
+ */
+export interface PreviewWorktreeInfo extends WorktreeInfo {
+  /** Type discriminator */
+  type: "preview";
+  /** Preview configuration */
+  preview: PreviewConfig;
+}
+
+/**
+ * Type guard to check if a worktree is a preview worktree
+ */
+export function isPreviewWorktree(
+  wt: WorktreeInfo | PreviewWorktreeInfo
+): wt is PreviewWorktreeInfo {
+  return "type" in wt && wt.type === "preview";
 }
 
 // ============================================================================
