@@ -1,0 +1,37 @@
+{
+  "name": "polygit",
+  "version": "0.1.0",
+  "description": "Git-like version control across multiple repositories",
+  "type": "module",
+  "main": "./.dist/index.js",
+  "bin": {
+    "polygit": "./.dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf .dist"
+  },
+  "keywords": [
+    "cli",
+    "git",
+    "polyrepo",
+    "monorepo",
+    "multi-repo"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/polyjuice/polygit.git"
+  },
+  "dependencies": {
+    "cmd-ts": "^0.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
