@@ -5,7 +5,8 @@
   "type": "module",
   "main": "./.dist/index.js",
   "bin": {
-    "polygit": "./.dist/index.js"
+    "polygit": "./.dist/index.js",
+    "pgit": "./.dist/index.js"
   },
   "scripts": {
     "build": "tsc -b",

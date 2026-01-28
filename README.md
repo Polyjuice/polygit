@@ -4,6 +4,8 @@ Git-like version control across multiple repositories.
 
 Polygit treats a collection of git repositories as a single unit, enabling synchronized branching, checkout, and commit operations across all member repos.
 
+**Command:** Both `polygit` and `pgit` work identically. Examples use `pgit` for brevity.
+
 ## Key Features
 
 - **Polycommits**: Atomic snapshots across all member repositories
@@ -18,24 +20,26 @@ Polygit treats a collection of git repositories as a single unit, enabling synch
 npm install -g polygit
 ```
 
+This installs both `polygit` and `pgit` commands.
+
 ## Quick Start
 
 ```bash
 # Initialize a polyrepo in a directory containing git repos
 cd my-projects
-polygit init
+pgit init
 
 # Create a branch across all repos
-polygit branch feature/new-feature
+pgit branch feature/new-feature
 
 # Switch all repos to that branch
-polygit checkout feature/new-feature
+pgit checkout feature/new-feature
 
 # Check status of all repos
-polygit status
+pgit status
 
 # Commit a snapshot of current state
-polygit commit -m "Synchronized commit"
+pgit commit -m "Synchronized commit"
 ```
 
 ## Commands
@@ -45,7 +49,7 @@ polygit commit -m "Synchronized commit"
 Initialize a polygit repository.
 
 ```bash
-polygit init [--name <name>]
+pgit init [--name <name>]
 ```
 
 Creates a `.polygit/` directory that tracks the state of all member repositories.
@@ -55,7 +59,7 @@ Creates a `.polygit/` directory that tracks the state of all member repositories
 Show the status of all member repositories.
 
 ```bash
-polygit status
+pgit status
 ```
 
 Displays branch, uncommitted changes, and sync state for each member.
@@ -65,7 +69,7 @@ Displays branch, uncommitted changes, and sync state for each member.
 Create a polycommit (synchronized snapshot).
 
 ```bash
-polygit commit -m "message"
+pgit commit -m "message"
 ```
 
 Records the current branch and commit of each member repository.
@@ -75,7 +79,7 @@ Records the current branch and commit of each member repository.
 Checkout a branch or polycommit across all repos.
 
 ```bash
-polygit checkout <ref>
+pgit checkout <ref>
 ```
 
 If the ref is a branch name, switches all repos to that branch. If it's a polycommit, restores the exact state recorded in that commit.
@@ -86,10 +90,10 @@ Manage branches across all repos.
 
 ```bash
 # Create a branch in all repos
-polygit branch <name>
+pgit branch <name>
 
 # List branches (coming soon)
-polygit branch --list
+pgit branch --list
 ```
 
 ### log
@@ -97,7 +101,7 @@ polygit branch --list
 Show polycommit history.
 
 ```bash
-polygit log
+pgit log
 ```
 
 ### worktree
@@ -106,13 +110,13 @@ Manage worktree sets across all member repositories.
 
 ```bash
 # Create a new worktree set
-polygit worktree add <name> [ref]
+pgit worktree add <name> [ref]
 
 # List worktree sets
-polygit worktree list
+pgit worktree list
 
 # Remove a worktree set
-polygit worktree remove <name>
+pgit worktree remove <name>
 ```
 
 ### preview
@@ -121,29 +125,29 @@ Manage preview worktrees that auto-merge multiple feature branches.
 
 ```bash
 # Create a preview worktree
-polygit preview add <name> <base> <feature>...
+pgit preview add <name> <base> <feature>...
 
 # List preview worktrees
-polygit preview list
+pgit preview list
 
 # Update/refresh a preview worktree
-polygit preview update [name]
+pgit preview update [name]
 
 # Remove a preview worktree
-polygit preview remove <name>
+pgit preview remove <name>
 ```
 
 #### Examples
 
 ```bash
 # Merge two features onto main
-polygit preview add my-preview main feature/auth feature/api
+pgit preview add my-preview main feature/auth feature/api
 
 # Use rebase strategy instead of merge
-polygit preview add my-preview main feature/auth feature/api -s rebase
+pgit preview add my-preview main feature/auth feature/api -s rebase
 
 # Use Claude AI to resolve conflicts
-polygit preview add my-preview main feature/auth feature/api -s claude
+pgit preview add my-preview main feature/auth feature/api -s claude
 ```
 
 #### Options for `preview add`
@@ -174,17 +178,17 @@ Preview worktrees solve the problem of testing multiple parallel feature branche
 
 ```bash
 # Create a preview worktree combining two features
-polygit preview add test-integration main feature/auth feature/api
+pgit preview add test-integration main feature/auth feature/api
 
 # Work in the preview worktree
 cd .worktrees/test-integration
 
 # After making changes to feature branches, refresh:
-polygit preview update
+pgit preview update
 
 # When done, remove the preview
 cd ..
-polygit preview remove test-integration
+pgit preview remove test-integration
 ```
 
 ### Merge Strategies
