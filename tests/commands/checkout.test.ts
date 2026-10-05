@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createPolyrepoFixture, type PolyrepoFixture } from "../helpers/fixtures.js";
 import { polygit, polygitOk } from "../helpers/cli.js";
 import { addAndCommit, getHead, getCurrentBranch } from "../helpers/git.js";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 describe("polygit checkout", () => {
@@ -55,9 +55,11 @@ describe("polygit checkout", () => {
     // Create a branch
     await polygitOk(["branch", "test-branch"], { cwd: fixture.root });
 
-    // Make uncommitted changes
+    // Verify actual discard of a tracked edit, not merely bypassing dirty checks.
+    const file = join(fixture.members.app, "README.md");
+    const original = await readFile(file, "utf8");
     await writeFile(
-      join(fixture.members.app, "dirty.ts"),
+      file,
       "// uncommitted\n"
     );
 
@@ -66,5 +68,6 @@ describe("polygit checkout", () => {
     });
 
     expect(result.exitCode).toBe(0);
+    expect(await readFile(file, "utf8")).toBe(original);
   });
 });

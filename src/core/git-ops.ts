@@ -126,8 +126,8 @@ export async function getCurrentBranch(
  * Check if working directory has uncommitted changes
  */
 export async function isDirty(repoPath: string): Promise<boolean> {
-  const result = await git(["status", "--porcelain"], repoPath);
-  return result.stdout.length > 0;
+  const status = await gitOrFail(["status", "--porcelain"], repoPath);
+  return status.length > 0;
 }
 
 /**
@@ -190,9 +190,16 @@ export async function commit(
  */
 export async function checkout(
   repoPath: string,
-  ref: string
+  ref: string,
+  options: { force?: boolean; detach?: boolean } = {}
 ): Promise<void> {
-  await gitOrFail(["checkout", ref], repoPath);
+  await gitOrFail([
+    "checkout",
+    ...(options.force ? ["--force"] : []),
+    ...(options.detach ? ["--detach"] : []),
+    ref,
+    "--",
+  ], repoPath);
 }
 
 /**
@@ -249,7 +256,7 @@ export async function resolveRef(
   repoPath: string,
   ref: string
 ): Promise<string | null> {
-  const result = await git(["rev-parse", ref], repoPath);
+  const result = await git(["rev-parse", "--verify", "--end-of-options", `${ref}^{commit}`], repoPath);
   if (result.exitCode !== 0) {
     return null;
   }

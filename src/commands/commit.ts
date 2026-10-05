@@ -44,6 +44,7 @@ export const commitCommand = command({
     console.log("Capturing state of all members...");
 
     const changes: string[] = [];
+    let captureFailed = false;
 
     for (const member of config.members) {
       const memberPath = resolveMemberPath(root.root, member.path);
@@ -65,8 +66,17 @@ export const commitCommand = command({
           );
         }
       } catch (err) {
-        console.error(`Warning: Could not get status of ${member.path}`);
+        captureFailed = true;
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`Error: Could not get status of ${member.path}: ${message}`);
       }
+    }
+
+    // Do not replace the last complete manifest with a partial capture.
+    if (captureFailed) {
+      console.error("Snapshot not created; previous state preserved.");
+      process.exitCode = 1;
+      return;
     }
 
     // Write new state

@@ -8,7 +8,7 @@ Polygit treats a collection of git repositories as a single unit, enabling synch
 
 ## Key Features
 
-- **Polycommits**: Atomic snapshots across all member repositories
+- **Polycommits**: Versioned snapshots of exact commits across all member repositories
 - **Unified branching**: Create/checkout branches in all repos simultaneously
 - **Worktree sets**: Git worktrees spanning all member repos
 - **Preview worktrees**: Auto-merge multiple feature branches for testing parallel work
@@ -74,6 +74,10 @@ pgit commit -m "message"
 
 Records the current branch and commit of each member repository.
 
+Commit file changes inside each member first: a polycommit records existing commits,
+not uncommitted edits. If any member cannot be read, capture fails and preserves the
+previous snapshot.
+
 ### checkout
 
 Checkout a branch or polycommit across all repos.
@@ -83,6 +87,12 @@ pgit checkout <ref>
 ```
 
 If the ref is a branch name, switches all repos to that branch. If it's a polycommit, restores the exact state recorded in that commit.
+
+Historical checkout uses the configuration and commit SHAs from that polycommit,
+with detached member HEADs; it does not rewind development branches. Missing member
+commits cause an error rather than falling back to current branch tips. A failure
+during checkout returns a nonzero exit status and reports that some members may
+already have switched.
 
 ### branch
 
