@@ -5,7 +5,7 @@ import {
   string,
   optional,
 } from "cmd-ts";
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   findPolygitRoot,
@@ -22,11 +22,11 @@ import {
 } from "../core/config.js";
 import {
   worktreeAdd as gitWorktreeAdd,
-  worktreeRemove as gitWorktreeRemove,
   branchExists,
   createBranch,
   showFileAtRef,
 } from "../core/git-ops.js";
+import { removeWorktreeSet } from "../core/worktree-cleanup.js";
 
 // ============================================================================
 // worktree add
@@ -234,26 +234,12 @@ const removeCommand = command({
 
     console.log(`Removing worktree set '${worktreeName}'...`);
 
-    // Remove worktree for each member
-    for (const member of config.members) {
-      const memberPath = resolveMemberPath(root.root, member.path);
-      const memberName = member.path.replace("./", "");
-      const memberWorktreePath = join(worktreePath, memberName);
-
-      try {
-        await gitWorktreeRemove(memberPath, memberWorktreePath);
-        console.log(`  ${member.path}: removed`);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        console.error(`  ${member.path}: ERROR - ${errorMessage}`);
-      }
-    }
-
-    // Remove worktree directory
     try {
-      await rm(worktreePath, { recursive: true, force: true });
-    } catch {
-      // Directory might already be gone
+      await removeWorktreeSet(root.root, worktreePath, config.members);
+    } catch (error) {
+      console.error(`Worktree removal failed; remaining files and registration preserved: ${error}`);
+      process.exitCode = 1;
+      return;
     }
 
     // Update worktrees config

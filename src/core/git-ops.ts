@@ -273,9 +273,12 @@ export async function resolveRef(
 export async function worktreeAdd(
   repoPath: string,
   worktreePath: string,
-  branchOrCommit: string
+  branchOrCommit: string,
+  options: { detach?: boolean } = {}
 ): Promise<void> {
-  await gitOrFail(["worktree", "add", worktreePath, branchOrCommit], repoPath);
+  await gitOrFail([
+    "worktree", "add", ...(options.detach ? ["--detach"] : []), worktreePath, branchOrCommit,
+  ], repoPath);
 }
 
 /**

@@ -129,6 +129,9 @@ pgit worktree list
 pgit worktree remove <name>
 ```
 
+Removal refuses uncommitted changes, including untracked files. Commit or stash
+your work before removing a worktree set or preview.
+
 ### preview
 
 Manage preview worktrees that auto-merge multiple feature branches.
@@ -183,6 +186,11 @@ Preview worktrees solve the problem of testing multiple parallel feature branche
 - Multiple developers (or AI agents) are working on separate features
 - You need to test how features interact before merging to main
 - You want an auto-updated environment that combines work from multiple branches
+
+Previews use detached worktrees, so source branches remain unchanged and multiple
+previews can share a base that is also checked out in your main workspace. Refresh
+rebuilds from the current local base and feature branches. Merge or edit-restoration
+conflicts return a nonzero exit status; stashed edits remain available for recovery.
 
 ### Example Workflow
 

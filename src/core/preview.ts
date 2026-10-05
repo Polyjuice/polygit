@@ -1,7 +1,6 @@
 import { resolveMemberPath } from "./paths.js";
 import {
   type PreviewConfig,
-  type PreviewMemberOverride,
   type MergeStrategy,
 } from "./config.js";
 import {
@@ -84,20 +83,25 @@ export function shouldIncludeUncommitted(
  */
 export async function stashChanges(
   repoPath: string
-): Promise<boolean> {
+): Promise<string | null> {
   const dirty = await isDirty(repoPath);
   if (!dirty) {
-    return false;
+    return null;
   }
   await gitOrFail(["stash", "push", "-u", "-m", "polygit-preview-stash"], repoPath);
-  return true;
+  return gitOrFail(["rev-parse", "refs/stash"], repoPath);
 }
 
 /**
  * Pop stashed changes
  */
-export async function popStash(repoPath: string): Promise<void> {
-  await git(["stash", "pop"], repoPath);
+export async function popStash(repoPath: string, stash: string): Promise<void> {
+  // Apply the captured object, not whichever worktree last wrote stash@{0}.
+  // Failed application deliberately leaves the recovery stash intact.
+  await gitOrFail(["stash", "apply", stash], repoPath);
+  const entries = await gitOrFail(["stash", "list", "--format=%H %gd"], repoPath);
+  const entry = entries.split("\n").find((line) => line.startsWith(`${stash} `));
+  if (entry) await gitOrFail(["stash", "drop", entry.split(" ")[1]], repoPath);
 }
 
 /**
@@ -108,16 +112,12 @@ export async function resetToBase(
   base: string
 ): Promise<void> {
   // Fetch to make sure we have latest
-  await git(["fetch", "--all"], repoPath);
-
-  // Try to checkout the base branch
-  const checkoutResult = await git(["checkout", base], repoPath);
-  if (checkoutResult.exitCode !== 0) {
-    throw new Error(`Failed to checkout base '${base}': ${checkoutResult.stderr}`);
-  }
-
-  // Reset hard to make sure we're clean
-  await gitOrFail(["reset", "--hard", base], repoPath);
+  await gitOrFail(["fetch", "--all"], repoPath);
+  const baseCommit = await gitOrFail(
+    ["rev-parse", "--verify", "--end-of-options", `${base}^{commit}`], repoPath,
+  );
+  // Rebuild on detached HEAD. Branch refs are shared with the source workspace.
+  await gitOrFail(["checkout", "--detach", "--force", baseCommit, "--"], repoPath);
 }
 
 /**
@@ -185,10 +185,10 @@ export async function updateMember(
     conflicts: [],
   };
 
+  let stashed: string | null = null;
   try {
     // Stash if needed
     const includeUncommitted = shouldIncludeUncommitted(memberPath, config, options);
-    let stashed = false;
     if (includeUncommitted) {
       stashed = await stashChanges(repoPath);
     }
@@ -219,23 +219,30 @@ export async function updateMember(
           // Abort and stop
           await git(["merge", "--abort"], repoPath);
           result.error = `Failed to resolve conflicts in ${feature}`;
-          return result;
+          break;
         }
       } else {
         result.conflicts.push(...mergeResult.conflicts);
         result.error = `Merge conflict in ${feature}`;
-        return result;
+        break;
       }
+    }
+
+    if (result.error) {
+      if (stashed) result.error += `; local edits preserved in stash ${stashed} (git stash apply ${stashed})`;
+      return result;
     }
 
     // Pop stash if we stashed
     if (stashed) {
-      await popStash(repoPath);
+      await popStash(repoPath, stashed);
+      stashed = null;
     }
 
     result.success = true;
   } catch (err) {
     result.error = err instanceof Error ? err.message : String(err);
+    if (stashed) result.error += `; local edits preserved in stash ${stashed} (git stash apply ${stashed})`;
   }
 
   return result;

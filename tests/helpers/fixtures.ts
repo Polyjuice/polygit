@@ -84,7 +84,7 @@ export async function createPolyrepoFixture(options?: {
 
 /**
  * Create a polyrepo with feature branches for preview testing.
- * The repos are left with detached HEAD so the base branch is available for worktrees.
+ * Leave the base checked out, as in a normal developer workspace.
  */
 export async function createPolyrepoWithBranches(options?: {
   base?: string;
@@ -120,12 +120,6 @@ export async function createPolyrepoWithBranches(options?: {
       // Go back to base
       await gitOk(["checkout", base], memberPath);
     }
-
-    // Detach HEAD so the base branch is available for worktrees
-    // This is necessary because git worktree doesn't allow the same branch
-    // to be checked out in multiple worktrees
-    const headCommit = await gitOk(["rev-parse", "HEAD"], memberPath);
-    await gitOk(["checkout", "--detach", headCommit.trim()], memberPath);
   }
 
   return fixture;
