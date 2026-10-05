@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gitTestEnv } from "./environment.js";
 
 // Get the project root by going up from tests/helpers/
 const __filename = fileURLToPath(import.meta.url);
@@ -28,7 +29,7 @@ export async function polygit(
   return new Promise((resolve, reject) => {
     const proc = spawn("node", [POLYGIT_BIN, ...args], {
       cwd: options.cwd,
-      env: { ...process.env, ...options.env },
+      env: gitTestEnv(options.env),
       stdio: ["ignore", "pipe", "pipe"],
     });
 

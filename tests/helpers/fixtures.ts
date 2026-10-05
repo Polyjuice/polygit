@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createGitRepo, createBranch, gitOk } from "./git.js";
@@ -34,6 +34,8 @@ export interface PolyrepoFixture extends TestContext {
   root: string;
   /** Paths to member repos */
   members: Record<string, string>;
+  /** Bare local origins, never network URLs. */
+  origins: Record<string, string>;
 }
 
 export async function createPolyrepoFixture(options?: {
@@ -51,6 +53,9 @@ export async function createPolyrepoFixture(options?: {
     );
 
   const members: Record<string, string> = {};
+  const origins: Record<string, string> = {};
+  const originsDir = join(root, ".origins");
+  await mkdir(originsDir);
 
   for (const name of memberNames) {
     const memberPath = join(root, name);
@@ -62,12 +67,18 @@ export async function createPolyrepoFixture(options?: {
       commitMessage: `Initial commit for ${name}`,
     });
     members[name] = memberPath;
+    const origin = join(originsDir, `${name}.git`);
+    await gitOk(["init", "--bare", origin], root);
+    await gitOk(["remote", "add", "origin", origin], memberPath);
+    await gitOk(["push", "-u", "origin", "main"], memberPath);
+    origins[name] = origin;
   }
 
   return {
     ...ctx,
     root,
     members,
+    origins,
   };
 }
 
