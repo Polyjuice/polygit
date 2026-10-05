@@ -94,6 +94,22 @@ commits cause an error rather than falling back to current branch tips. A failur
 during checkout returns a nonzero exit status and reports that some members may
 already have switched.
 
+Missing member repositories are cloned automatically from the URLs in the target
+snapshot. Missing commit objects are fetched as needed, first through a
+`polygit/commits/<SHA>` snapshot tag if available, otherwise by requesting the SHA.
+Servers that do not permit direct SHA requests must provide the snapshot tag.
+Member URLs must be absolute paths or repository URLs, not relative local paths.
+Existing non-repository directories and symlinks are never overwritten, and
+repositories absent from the target snapshot are not deleted.
+
+```bash
+pgit checkout <ref> --offline  # Fail if a repo or commit is unavailable locally
+```
+
+`--offline` disables member cloning and fetching. The target metadata ref must
+already be available locally in either mode. Member revisions must have been
+published to their recorded origins before another machine can restore them.
+
 ### branch
 
 Manage branches across all repos.
