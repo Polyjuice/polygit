@@ -44,6 +44,26 @@ pgit commit -m "Synchronized commit"
 
 ## Commands
 
+### clone
+
+Clone an existing workspace from its **meta-repository** (the remote for `.polygit/`):
+
+```bash
+pgit clone <meta-repository> [directory]
+pgit clone --branch <branch-or-tag> <meta-repository> [directory]
+```
+
+This creates `<directory>/.polygit`, clones the recorded member repositories,
+and checks out their exact saved revisions, even if their remote branches have
+advanced. Without a directory argument, the repository name is used. A destination
+must be absent or empty. The selected metadata branch remains attached; members
+start at their recorded commits. Use `pgit checkout <branch>` to switch to member
+development branches afterward.
+
+If a member cannot be restored, clone returns a nonzero exit status and keeps the
+metadata and any completed clones. After resolving the issue, retry with
+`pgit checkout <polycommit-sha>` from the new workspace.
+
 ### init
 
 Initialize a polygit repository.

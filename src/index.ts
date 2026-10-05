@@ -2,6 +2,7 @@
 
 import { run, subcommands } from "cmd-ts";
 import { initCommand } from "./commands/init.js";
+import { cloneCommand } from "./commands/clone.js";
 import { statusCommand } from "./commands/status.js";
 import { commitCommand } from "./commands/commit.js";
 import { checkoutCommand } from "./commands/checkout.js";
@@ -16,6 +17,7 @@ const app = subcommands({
   version: "0.1.0",
   cmds: {
     init: initCommand,
+    clone: cloneCommand,
     status: statusCommand,
     commit: commitCommand,
     checkout: checkoutCommand,
