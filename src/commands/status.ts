@@ -80,7 +80,7 @@ export const statusCommand = command({
 
     if (config.members.length === 0) {
       console.log("No member repositories configured");
-      console.log("Add git repositories to this directory and run 'polygit init' again");
+      console.log("Use 'polygit link <path>' to register an existing repository");
     }
   },
 });

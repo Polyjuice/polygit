@@ -10,6 +10,7 @@ import { branchCommand } from "./commands/branch.js";
 import { logCommand } from "./commands/log.js";
 import { worktreeCommand } from "./commands/worktree.js";
 import { previewCommand } from "./commands/preview.js";
+import { linkCommand, unlinkCommand } from "./commands/membership.js";
 
 const app = subcommands({
   name: "polygit",
@@ -18,6 +19,8 @@ const app = subcommands({
   cmds: {
     init: initCommand,
     clone: cloneCommand,
+    link: linkCommand,
+    unlink: unlinkCommand,
     status: statusCommand,
     commit: commitCommand,
     checkout: checkoutCommand,
