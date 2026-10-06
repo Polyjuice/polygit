@@ -74,6 +74,55 @@ pgit init [--name <name>]
 
 Creates a `.polygit/` directory that tracks the state of all member repositories.
 
+### link / unlink
+
+Change membership in an existing polyrepo:
+
+```bash
+pgit link ./new-repo
+pgit commit -m "Link new-repo"
+
+pgit unlink ./old-repo
+pgit commit -m "Unlink old-repo"
+```
+
+`link` registers an **existing Git checkout inside the polyrepo**. It records its
+current commit, branch (or detached HEAD), and origin URL when available. It does
+not clone, move, or create a repository. The checkout must have at least one
+commit. Dirty checkouts are allowed; only their committed revision is recorded.
+Nested paths are supported, but members cannot overlap, traverse symlinks, or live
+inside `.polygit`, `.git`, or `.worktrees`. Relative local origins are recorded as
+absolute paths for restoration.
+
+`unlink` removes the member from both `config.json` and `state.json`. Its checkout
+can already be missing or moved. Repository files, uncommitted work, branches,
+remotes, and Git worktree registrations are left untouched. Other members' saved
+states are preserved. Unlinking the last member is allowed; linking an existing
+member or unlinking an unknown member returns an error.
+
+Paths are relative to the **polyrepo root**, even when invoked from a subdirectory;
+`repo`, `./repo/`, and an absolute path inside that root are equivalent. To unlink
+a moved checkout, use its **old registered path**, not its new location:
+
+```bash
+cd /Users/martin/src/evryzin
+pgit unlink ./polygit
+pgit commit -m "Unlink polygit"
+```
+
+Both commands leave membership edits **unstaged and uncommitted**. Review them with
+`git -C .polygit diff`, then use `pgit commit` to record them. As usual, that commit
+captures all remaining members and stages metadata changes, so review any other
+pending metadata edits too. Historical polycommits retain their original membership;
+checking out an older snapshot can restore an unlinked member, including cloning it
+again when its origin is available.
+
+Run membership commands from the main polyrepo, not a Polygit worktree set.
+Remove registered worktree sets and previews before changing membership (use
+`pgit worktree list` to find them): all sets currently share the main membership
+list. Staged or conflicted `config.json` / `state.json` must be committed or unstaged
+first. No network access is needed by either command.
+
 ### status
 
 Show the status of all member repositories.
