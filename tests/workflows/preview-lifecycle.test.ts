@@ -67,7 +67,6 @@ describe("Preview Lifecycle: add -> list -> update -> remove", () => {
       { "new-in-feature-a.txt": "New content in feature-a\n" },
       "Add new content to feature-a"
     );
-    // Note: can't checkout main - it's being used by the preview worktree
 
     const updateResult = await polygitOk(
       ["preview", "update", "test-preview"],
@@ -101,7 +100,6 @@ describe("Preview Lifecycle: add -> list -> update -> remove", () => {
 
   it("should support different merge strategies", async () => {
     // Create preview with rebase strategy
-    // Note: Can only create one preview worktree per base branch (git worktree limitation)
     await polygitOk(
       ["preview", "add", "rebase-preview", "main", "feature-a", "-s", "rebase"],
       { cwd: fixture.root }

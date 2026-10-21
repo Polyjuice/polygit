@@ -8,7 +8,7 @@ Polygit treats a collection of git repositories as a single unit, enabling synch
 
 ## Key Features
 
-- **Polycommits**: Atomic snapshots across all member repositories
+- **Polycommits**: Versioned snapshots of exact commits across all member repositories
 - **Unified branching**: Create/checkout branches in all repos simultaneously
 - **Worktree sets**: Git worktrees spanning all member repos
 - **Preview worktrees**: Auto-merge multiple feature branches for testing parallel work
@@ -44,6 +44,26 @@ pgit commit -m "Synchronized commit"
 
 ## Commands
 
+### clone
+
+Clone an existing workspace from its **meta-repository** (the remote for `.polygit/`):
+
+```bash
+pgit clone <meta-repository> [directory]
+pgit clone --branch <branch-or-tag> <meta-repository> [directory]
+```
+
+This creates `<directory>/.polygit`, clones the recorded member repositories,
+and checks out their exact saved revisions, even if their remote branches have
+advanced. Without a directory argument, the repository name is used. A destination
+must be absent or empty. The selected metadata branch remains attached; members
+start at their recorded commits. Use `pgit checkout <branch>` to switch to member
+development branches afterward.
+
+If a member cannot be restored, clone returns a nonzero exit status and keeps the
+metadata and any completed clones. After resolving the issue, retry with
+`pgit checkout <polycommit-sha>` from the new workspace.
+
 ### init
 
 Initialize a polygit repository.
@@ -74,6 +94,10 @@ pgit commit -m "message"
 
 Records the current branch and commit of each member repository.
 
+Commit file changes inside each member first: a polycommit records existing commits,
+not uncommitted edits. If any member cannot be read, capture fails and preserves the
+previous snapshot.
+
 ### checkout
 
 Checkout a branch or polycommit across all repos.
@@ -83,6 +107,28 @@ pgit checkout <ref>
 ```
 
 If the ref is a branch name, switches all repos to that branch. If it's a polycommit, restores the exact state recorded in that commit.
+
+Historical checkout uses the configuration and commit SHAs from that polycommit,
+with detached member HEADs; it does not rewind development branches. Missing member
+commits cause an error rather than falling back to current branch tips. A failure
+during checkout returns a nonzero exit status and reports that some members may
+already have switched.
+
+Missing member repositories are cloned automatically from the URLs in the target
+snapshot. Missing commit objects are fetched as needed, first through a
+`polygit/commits/<SHA>` snapshot tag if available, otherwise by requesting the SHA.
+Servers that do not permit direct SHA requests must provide the snapshot tag.
+Member URLs must be absolute paths or repository URLs, not relative local paths.
+Existing non-repository directories and symlinks are never overwritten, and
+repositories absent from the target snapshot are not deleted.
+
+```bash
+pgit checkout <ref> --offline  # Fail if a repo or commit is unavailable locally
+```
+
+`--offline` disables member cloning and fetching. The target metadata ref must
+already be available locally in either mode. Member revisions must have been
+published to their recorded origins before another machine can restore them.
 
 ### branch
 
@@ -118,6 +164,9 @@ pgit worktree list
 # Remove a worktree set
 pgit worktree remove <name>
 ```
+
+Removal refuses uncommitted changes, including untracked files. Commit or stash
+your work before removing a worktree set or preview.
 
 ### preview
 
@@ -173,6 +222,11 @@ Preview worktrees solve the problem of testing multiple parallel feature branche
 - Multiple developers (or AI agents) are working on separate features
 - You need to test how features interact before merging to main
 - You want an auto-updated environment that combines work from multiple branches
+
+Previews use detached worktrees, so source branches remain unchanged and multiple
+previews can share a base that is also checked out in your main workspace. Refresh
+rebuilds from the current local base and feature branches. Merge or edit-restoration
+conflicts return a nonzero exit status; stashed edits remain available for recovery.
 
 ### Example Workflow
 

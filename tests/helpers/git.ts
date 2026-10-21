@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
+import { gitTestEnv } from "./environment.js";
 
 export interface GitResult {
   exitCode: number;
@@ -15,6 +16,7 @@ export async function git(args: string[], cwd: string): Promise<GitResult> {
   return new Promise((resolve) => {
     const proc = spawn("git", args, {
       cwd,
+      env: gitTestEnv(),
       stdio: ["ignore", "pipe", "pipe"],
     });
 

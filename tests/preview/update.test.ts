@@ -37,7 +37,6 @@ describe("polygit preview update", () => {
       { "new-change.txt": "New content\n" },
       "New feature-a commit"
     );
-    // Note: can't checkout main here - it's being used by the preview worktree
 
     // Update preview
     const result = await polygitOk(

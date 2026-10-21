@@ -31,10 +31,10 @@ import {
 } from "../core/config.js";
 import {
   worktreeAdd as gitWorktreeAdd,
-  worktreeRemove as gitWorktreeRemove,
   branchExists,
 } from "../core/git-ops.js";
-import { updateMember } from "../core/preview.js";
+import { updateMember, getMemberPreviewConfig } from "../core/preview.js";
+import { removeWorktreeSet } from "../core/worktree-cleanup.js";
 import { createClaudeResolver } from "../core/claude-resolver.js";
 
 // ============================================================================
@@ -158,13 +158,14 @@ const addCommand = command({
       const memberWorktreePath = join(worktreePath, memberName);
 
       try {
-        if (!(await branchExists(memberPath, base))) {
-          console.error(`Error: ${member.path} does not have base branch '${base}'`);
+        const memberBase = getMemberPreviewConfig(member.path, previewConfig).base;
+        if (!(await branchExists(memberPath, memberBase))) {
+          console.error(`Error: ${member.path} does not have base branch '${memberBase}'`);
           await rm(worktreePath, { recursive: true, force: true });
           process.exit(1);
         }
 
-        await gitWorktreeAdd(memberPath, memberWorktreePath, base);
+        await gitWorktreeAdd(memberPath, memberWorktreePath, memberBase, { detach: true });
         console.log(`  ${member.path}: created worktree`);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
@@ -194,6 +195,7 @@ const addCommand = command({
 
     const resolveConflicts = previewConfig.strategy === "claude" ? createClaudeResolver() : undefined;
 
+    let allSuccess = true;
     for (const member of config.members) {
       console.log(`\n${member.path}:`);
       const result = await updateMember(
@@ -212,6 +214,7 @@ const addCommand = command({
           console.log(`  Skipped (no branch): ${result.skippedFeatures.join(", ")}`);
         }
       } else {
+        allSuccess = false;
         console.error(`  Failed: ${result.error}`);
         if (result.conflicts.length > 0) {
           console.error(`  Conflicts in: ${result.conflicts.join(", ")}`);
@@ -221,6 +224,10 @@ const addCommand = command({
 
     console.log(`\ncd ${worktreePath} to work in this preview worktree`);
     console.log("Run 'polygit preview update' to refresh the merged state");
+    if (!allSuccess) {
+      console.error("Preview created with merge errors; resolve them before using it.");
+      process.exitCode = 1;
+    }
   },
 });
 
@@ -474,24 +481,12 @@ const removeCommand = command({
 
     console.log(`Removing preview worktree '${worktreeName}'...`);
 
-    for (const member of config.members) {
-      const memberPath = resolveMemberPath(root.root, member.path);
-      const memberName = member.path.replace("./", "");
-      const memberWorktreePath = join(worktreePath, memberName);
-
-      try {
-        await gitWorktreeRemove(memberPath, memberWorktreePath);
-        console.log(`  ${member.path}: removed`);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        console.error(`  ${member.path}: ERROR - ${errorMessage}`);
-      }
-    }
-
     try {
-      await rm(worktreePath, { recursive: true, force: true });
-    } catch {
-      // Directory might already be gone
+      await removeWorktreeSet(root.root, worktreePath, config.members);
+    } catch (error) {
+      console.error(`Preview removal failed; remaining files and registration preserved: ${error}`);
+      process.exitCode = 1;
+      return;
     }
 
     worktrees.worktrees = worktrees.worktrees.filter(
